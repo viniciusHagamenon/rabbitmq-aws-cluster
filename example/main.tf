@@ -27,7 +27,7 @@ provider "aws" {
 }
 
 module "rabbitmq" {
-  source = "github.com/ulamlabs/rabbitmq-cluster"
+  source = "github.com/viniciusHagamenon/rabbitmq-aws-cluster"
   region = "${var.region}"
   vpc_id = "${var.vpc_id}"
   ssh_key_name = "${var.ssh_key_name}"
