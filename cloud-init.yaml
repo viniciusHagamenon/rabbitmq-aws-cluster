@@ -7,20 +7,20 @@ write_files:
     content: |
         [ { rabbit, [
           { loopback_users, [ ] } ] }
-         ].
+        ].
   - path: /root/find_hosts.sh
     content: |
         #!/usr/bin/env bash
 
         export AWS_DEFAULT_REGION='${region}'
 
-        DNSES=$(aws ec2 describe-instances --filters "Name=tag:aws:autoscaling:groupName,Values=rabbitmq" "Name=instance-state-name,Values=running" | jq ".Reservations[].Instances[].PrivateDnsName" | xargs)
+        DNSES=$(aws ec2 describe-instances --filters "Name=tag:aws:autoscaling:groupName,Values=rabbitmq-${client}" "Name=instance-state-name,Values=running" | jq ".Reservations[].Instances[].PrivateDnsName" | xargs)
 
         HOSTNAMES=()
         for dns in $DNSES; do
-            hostname=($${dns//./ })
-            if [ "$hostname" != "$HOSTNAME" ]; then
-              HOSTNAMES+=( $hostname )
+            hostname=($${dns})
+            if [ "$hostname" != "$${HOSTNAME}.$${AWS_DEFAULT_REGION^^}.COMPUTE.INTERNAL" ]; then
+              HOSTNAMES+="$${hostname^^} "
             fi
         done
 
@@ -37,10 +37,10 @@ write_files:
 
           NEW_HOSTNAMES=()
           for hostname in $HOSTNAMES; do
-            rabbitmqctl join_cluster rabbit@$hostname
+            rabbitmqctl join_cluster rabbit@$${hostname^^}
             st=$?
             if [ $st -ne 0 ] && [ $st -ne 130 ]; then  # 130 is "already joined"
-              NEW_HOSTNAMES+=( $hostname )
+              NEW_HOSTNAMES+=( $${hostname^^} )
             fi
           done
 
@@ -69,7 +69,7 @@ runcmd:
   - service docker start
   - chkconfig docker on
   - usermod -a -G docker ec2-user
-  - docker run -d --name rabbitmq --hostname $HOSTNAME -p 4369:4369 -p 5672:5672 -p 15672:15672 -p 25672:25672 -e RABBITMQ_ERLANG_COOKIE='${secret_cookie}' -e RABBITMQ_USE_LONGNAME=true -v /root/data:/var/lib/rabbitmq -v /root/conf/:/etc/rabbitmq -v /root/bin:/tmp/bin rabbitmq:3-management
+  - docker run -d --name rabbitmq --hostname $${HOSTNAME^^}.US-WEST-2.COMPUTE.INTERNAL -p 4369:4369 -p 5672:5672 -p 15672:15672 -p 25672:25672 -e RABBITMQ_ERLANG_COOKIE='${secret_cookie}' -e RABBITMQ_USE_LONGNAME=true -v /root/data:/var/lib/rabbitmq -v /root/conf/:/etc/rabbitmq -v /root/bin:/tmp/bin rabbitmq:3-management
   - sleep 1
   - docker exec rabbitmq bash /tmp/bin/join_cluster.sh $(bash /root/find_hosts.sh)
   - sleep 1
