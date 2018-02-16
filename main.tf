@@ -27,6 +27,7 @@ data "template_file" "cloud-init" {
 
   vars {
     sync_node_count   = 2
+    client            = "${var.client}"
     region            = "${var.region}"
     secret_cookie     = "${var.rabbitmq_secret_cookie}"
     admin_password    = "${var.admin_password}"
