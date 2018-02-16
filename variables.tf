@@ -1,6 +1,7 @@
 variable "vpc_id" {}
 variable "region" {}
 variable "ssh_key_name" {}
+variable "client" {}
 variable "count" {
   description = "Number of RabbitMQ nodes"
   default = 2

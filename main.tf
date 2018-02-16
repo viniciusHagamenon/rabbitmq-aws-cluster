@@ -26,7 +26,7 @@ data "template_file" "cloud-init" {
   template = "${file("${path.module}/cloud-init.yaml")}"
 
   vars {
-    sync_node_count = 3
+    sync_node_count = 2
     region            = "${var.region}"
     secret_cookie     = "${var.rabbitmq_secret_cookie}"
     admin_password    = "${var.admin_password}"
@@ -36,12 +36,12 @@ data "template_file" "cloud-init" {
 }
 
 resource "aws_iam_role" "role" {
-  name               = "rabbitmq"
+  name               = "rabbitmq-${var.client}"
   assume_role_policy = "${data.aws_iam_policy_document.policy_doc.json}"
 }
 
 resource "aws_iam_role_policy" "policy" {
-  name   = "rabbitmq"
+  name   = "rabbitmq-${var.client}"
   role   = "${aws_iam_role.role.id}"
   policy = <<EOF
 {
@@ -63,13 +63,13 @@ EOF
 }
 
 resource "aws_iam_instance_profile" "profile" {
-  name = "rabbitmq"
+  name = "rabbitmq-${var.client}"
   role = "${aws_iam_role.role.name}"
 }
 
 
 resource "aws_security_group" "rabbitmq_elb" {
-  name        = "rabbitmq_elb"
+  name        = "rabbitmq-elb-${var.client}"
   vpc_id      = "${var.vpc_id}"
   description = "Security Group for the rabbitmq elb"
 
@@ -95,12 +95,13 @@ resource "aws_security_group" "rabbitmq_elb" {
   }
 
   tags {
-    Name = "rabbitmq elb"
+    Name = "rabbitmq elb ${var.client}"
+    client="${var.client}"
   }
 }
 
 resource "aws_security_group" "rabbitmq_nodes" {
-  name        = "rabbitmq-nodes"
+  name        = "rabbitmq-nodes-${var.client}"
   vpc_id      = "${var.vpc_id}"
   description = "Security Group for the rabbitmq nodes"
 
@@ -142,12 +143,13 @@ resource "aws_security_group" "rabbitmq_nodes" {
   }
 
   tags {
-    Name = "rabbitmq nodes"
+    Name = "rabbitmq nodes ${var.client}"
+    client = "${var.client}"
   }
 }
 
 resource "aws_launch_configuration" "rabbitmq" {
-  name                 = "rabbitmq"
+  name                 = "rabbitmq-${var.client}"
   image_id             = "${data.aws_ami_ids.ami.ids[0]}"
   instance_type        = "${var.instance_type}"
   key_name             = "${var.ssh_key_name}"
@@ -157,7 +159,7 @@ resource "aws_launch_configuration" "rabbitmq" {
 }
 
 resource "aws_autoscaling_group" "rabbitmq" {
-  name                      = "rabbitmq"
+  name                      = "rabbitmq-${var.client}"
   max_size                  = "${var.count}"
   min_size                  = "${var.count}"
   desired_capacity          = "${var.count}"
@@ -170,13 +172,19 @@ resource "aws_autoscaling_group" "rabbitmq" {
 
   tag {
     key = "Name"
-    value = "rabbitmq"
+    value = "rabbitmq-${var.client}"
+    propagate_at_launch = true
+  }
+
+  tag {
+    key = "client"
+    value = "${var.client}"
     propagate_at_launch = true
   }
 }
 
 resource "aws_elb" "elb" {
-  name                 = "rabbit-elb"
+  name                 = "rabbit-elb-${var.client}"
 
   listener {
     instance_port      = 5672
@@ -206,6 +214,7 @@ resource "aws_elb" "elb" {
   security_groups       = ["${aws_security_group.rabbitmq_elb.id}"]
 
   tags {
-    Name = "rabbitmq"
+    Name = "rabbitmq-${var.client}"
+    client="${var.client}"
   }
 }

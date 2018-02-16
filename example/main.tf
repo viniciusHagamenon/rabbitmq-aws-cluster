@@ -19,6 +19,7 @@ variable "rabbitmq_admin_password" {}
 variable "rabbitmq_rabbit_password" {}
 variable "rabbitmq_secret_cookie" {}
 variable "rabbitmq_node_count" {}
+variable "client" {}
 
 provider "aws" {
   region     = "${var.region}"
@@ -39,4 +40,5 @@ module "rabbitmq" {
   rabbit_password = "${var.rabbitmq_rabbit_password}"
   rabbitmq_secret_cookie = "${var.rabbitmq_secret_cookie}"
   count = "${var.rabbitmq_node_count}"
+  client = "${var.client}"
 }
