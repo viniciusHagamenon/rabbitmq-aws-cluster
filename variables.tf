@@ -2,6 +2,10 @@ variable "vpc_id" {}
 variable "region" {}
 variable "ssh_key_name" {}
 variable "client" {}
+variable "elb_internal" {
+  description = "ELB type"
+  default = true
+}
 variable "count" {
   description = "Number of RabbitMQ nodes"
   default = 2

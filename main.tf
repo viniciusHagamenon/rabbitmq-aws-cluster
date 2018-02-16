@@ -26,7 +26,7 @@ data "template_file" "cloud-init" {
   template = "${file("${path.module}/cloud-init.yaml")}"
 
   vars {
-    sync_node_count = 2
+    sync_node_count   = 2
     region            = "${var.region}"
     secret_cookie     = "${var.rabbitmq_secret_cookie}"
     admin_password    = "${var.admin_password}"
@@ -210,7 +210,7 @@ resource "aws_elb" "elb" {
 
   subnets               = ["${var.subnet_ids}"]
   idle_timeout          = 3600
-  internal              = false
+  internal              = "${var.elb_internal}"
   security_groups       = ["${aws_security_group.rabbitmq_elb.id}"]
 
   tags {

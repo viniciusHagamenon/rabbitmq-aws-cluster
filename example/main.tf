@@ -1,6 +1,8 @@
 variable "access_key" {}
 variable "secret_key" {}
 variable "region" {}
+variable "client" {}
+variable "elb_internal" {}
 
 variable "vpc_id" {}
 variable "ssh_key_name" {}
@@ -19,7 +21,6 @@ variable "rabbitmq_admin_password" {}
 variable "rabbitmq_rabbit_password" {}
 variable "rabbitmq_secret_cookie" {}
 variable "rabbitmq_node_count" {}
-variable "client" {}
 
 provider "aws" {
   region     = "${var.region}"
