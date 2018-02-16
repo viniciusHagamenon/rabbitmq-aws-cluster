@@ -42,4 +42,5 @@ module "rabbitmq" {
   rabbitmq_secret_cookie = "${var.rabbitmq_secret_cookie}"
   count = "${var.rabbitmq_node_count}"
   client = "${var.client}"
+  elb_internal = "${var.elb_internal}"
 }
